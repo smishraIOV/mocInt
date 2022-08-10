@@ -1,6 +1,10 @@
 # Basic mintable token contract
 
-A contract for local (regtest) testing with mintable tokens (using OpenZep ERC20). Started with the base hardhat setup. Add burning/redeeming later. Also missing safe math at present.
+A contract for local (regtest) testing with mintable tokens (using OpenZep ERC20). Started with the base hardhat setup. Add burning/redeeming later. 
+
+BTC price variable in the contract is uint and assumes 1 BTC >= 1USD. The units here are for RSK, which uses `gwei` as the smallest unit. 
+
+The OZ safe math library is not used. Solidity 8+ will automtically revert on under/overflows. 
 
 ## Sample Hardhat Project
 
