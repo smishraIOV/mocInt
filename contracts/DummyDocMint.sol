@@ -48,7 +48,8 @@ contract DummyDocMint is ERC20 {
         bool success;
         (success, ) =  msg.sender.call{value: remainder}("");
         require(success, "Failed to send refund");
-        console.log("Amount refunded %o", remainder);   
+        console.log("Amount refunded %o", remainder);
+        console.log("RBTC balance in contract is %o", address(this).balance); 
     }
 
     // Change params
@@ -62,6 +63,15 @@ contract DummyDocMint is ERC20 {
         require(msg.sender == owner, "Only owner can reset fee");
         fee = _newFee;
         console.log("New minting fee is %o",fee );
+    }
+
+    // Owner can claim collected RBTC (otherwise funds can get stuck)
+    function claimTreasury() public  {
+        require(msg.sender == owner, "Only owner can claim treasury");
+        uint256 treasuryBal = address(this).balance; 
+        //this shouldn't fail. If it does, error won't help recover funds.
+        owner.call{value: treasuryBal}("");
+        //console.log("All funds claimed from treasury: %o in total", treasuryBal);
     }
 
 }

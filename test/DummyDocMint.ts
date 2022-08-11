@@ -1,5 +1,5 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+//import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
@@ -102,7 +102,37 @@ describe("Dummy DOC Mint Test", function () {
             let gasusedGwei = initRbtcBal.sub(newRbtcBal).sub(RbtcUsed);
             let gasUsed = gasusedGwei.div(tx.gasPrice!);
             console.log("Gas used for minting: %d gas ",gasUsed); //may be different in RSK and Hardhat VM
-        })
+        });
+    });
+
+    describe("Treasury Ops", function () {
+        it("Only owner should be able to claim funds", async function () {
+            const {erc20, initFee, otherAccount} = await loadFixture(deployDummyERC20);
+            let val = 2000_000n * ONE_GWEI;
+            let toMint = 1000_000n * ONE_GWEI; //10^15 gwei = 0.01BTC
+            
+            // otherAccount mints
+            await erc20.connect(otherAccount).mintDoc(toMint, {value: val});
+            
+            let RbtcUsed = ethers.BigNumber.from(toMint + initFee); 
+            //console.log("The contract's address is: %s and the balance is %d ", erc20.address, await ethers.provider.getBalance(erc20.address));
+            //contract should have funds spent by minter 
+            expect(await ethers.provider.getBalance(erc20.address)).to.equal(RbtcUsed);
+            
+            //other account should not be able to claim funds
+            await expect(erc20.connect(otherAccount).claimTreasury()).to.be.revertedWith(
+                "Only owner can claim treasury"
+               );
+
+            // owner claims funds in contract
+            await erc20.claimTreasury(); 
+            expect(await ethers.provider.getBalance(erc20.address)).to.equal(0);
+            //let newRbtcBal = await otherAccount.getBalance();
+            //console.log("Difference in balance: %d ",initRbtcBal.sub(newRbtcBal));
+                        //let gasusedGwei = initRbtcBal.sub(newRbtcBal).sub(RbtcUsed);
+            //let gasUsed = gasusedGwei.div(tx.gasPrice!);
+            //console.log("Gas used for minting: %d gas ",gasUsed); //may be different in RSK and Hardhat VM
+        });
     });
 
 });
